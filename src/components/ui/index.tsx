@@ -189,12 +189,19 @@ export function Input({ label, error, icon, className, ...props }: InputProps) {
         {icon && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[rgb(var(--text-muted))]">{icon}</span>}
         <input
           className={cn(
-            "input-glass",
+            "input-glass transition-shadow duration-200 outline-none",
             icon ? "pl-9" : "",
-            error ? "border-red-500/50 focus:border-red-500" : "",
+            error ? "border-red-500/50 focus:border-red-500 focus:ring-2 focus:ring-red-500/20" : "focus:ring-2 focus:ring-green-500/20 focus:border-green-500/50",
             className
           )}
           {...props}
+          onFocus={(e) => {
+            // Automatically select '0' or all content in numeric fields on click for fast UX
+            if (e.target.type === "number" || e.target.value === "0") {
+              e.target.select();
+            }
+            if (props.onFocus) props.onFocus(e);
+          }}
         />
       </div>
       {error && <p className="text-xs text-red-400">{error}</p>}

@@ -10,6 +10,7 @@ import { StreakDisplay, useConfetti } from "@/components/streaks/StreakDisplay";
 import { AddMealForm } from "@/components/nutrition/AddMealForm";
 import { SetTargetsForm } from "@/components/nutrition/SetTargetsForm";
 import { SleepForm } from "@/components/dashboard/SleepForm";
+import { ReadinessWidget } from "@/components/dashboard/ReadinessWidget";
 import WorkoutBuilder from "@/components/workout/WorkoutBuilder";
 import { MealCard } from "@/components/nutrition/MealCard";
 import { MealInput, NutritionTargetInput, SleepInput } from "@/lib/validations";
@@ -189,6 +190,11 @@ export default function DashboardPage() {
           </motion.button>
         ))}
       </div>
+
+      {/* Readiness Score */}
+      {data?.readinessScore !== undefined && (
+        <ReadinessWidget score={data.readinessScore} />
+      )}
 
       {/* Main grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">

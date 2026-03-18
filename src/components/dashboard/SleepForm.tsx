@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import { SleepSchema, SleepInput } from "@/lib/validations";
 import { ISleepEntry } from "@/types";
-import { Select } from "@/components/ui";
+import { Select, Input } from "@/components/ui";
 import { Loader2, Moon } from "lucide-react";
 
 interface SleepFormProps {
@@ -62,17 +62,15 @@ export function SleepForm({ current, onSubmit, loading }: SleepFormProps) {
         {errors.hours && <p className="text-xs text-red-400">{errors.hours.message}</p>}
       </div>
 
-      {/* Or type */}
       <div className="space-y-1.5">
         <label className="text-xs font-medium text-[rgb(var(--text-secondary))] uppercase tracking-wider">Or type exact hours</label>
-        <input
+        <Input
           type="number"
           min="0"
           max="24"
           step="0.5"
-          value={hours}
+          value={hours || ""}
           onChange={(e) => setValue("hours", parseFloat(e.target.value) || 0)}
-          className="input-glass w-full"
           placeholder="e.g. 7.5"
         />
       </div>

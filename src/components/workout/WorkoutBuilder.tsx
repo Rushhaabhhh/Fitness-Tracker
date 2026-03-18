@@ -24,6 +24,36 @@ export default function WorkoutBuilder({ onSuccess }: { onSuccess?: () => void }
   const [exercises, setExercises] = useState<ExerciseData[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Sync offline workouts
+  useEffect(() => {
+    const syncWorkouts = async () => {
+      const offline = JSON.parse(localStorage.getItem('offlineWorkouts') || '[]');
+      if (offline.length === 0) return;
+
+      try {
+        for (const payload of offline) {
+          await fetch("/api/workouts", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+        }
+        localStorage.removeItem('offlineWorkouts');
+        alert("Offline workouts synced successfully!");
+        if (onSuccess) onSuccess();
+      } catch (err) {
+        console.error("Failed to sync offline workouts", err);
+      }
+    };
+
+    window.addEventListener("online", syncWorkouts);
+    if (typeof window !== "undefined" && navigator.onLine) {
+      syncWorkouts();
+    }
+
+    return () => window.removeEventListener("online", syncWorkouts);
+  }, [onSuccess]);
+
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (isStarted && startTime) {
@@ -103,18 +133,37 @@ export default function WorkoutBuilder({ onSuccess }: { onSuccess?: () => void }
     setIsSubmitting(true);
     const durationMinutes = Math.floor(elapsedSeconds / 60);
 
+    const payload = {
+      name: workoutName,
+      duration: durationMinutes,
+      exercises: exercises.map((e) => ({
+        name: e.name,
+        sets: e.sets.map((s) => ({ weight: Number(s.weight), reps: Number(s.reps) })),
+      })),
+    };
+
+    if (!navigator.onLine) {
+      const offline = JSON.parse(localStorage.getItem("offlineWorkouts") || "[]");
+      offline.push({ ...payload, date: new Date().toISOString() });
+      localStorage.setItem("offlineWorkouts", JSON.stringify(offline));
+      
+      alert("You are offline. Workout saved locally and will sync when reconnected! 📲");
+      
+      setIsStarted(false);
+      setStartTime(null);
+      setElapsedSeconds(0);
+      setWorkoutName("");
+      setExercises([]);
+      setIsSubmitting(false);
+      if (onSuccess) onSuccess();
+      return;
+    }
+
     try {
       const res = await fetch("/api/workouts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: workoutName,
-          duration: durationMinutes,
-          exercises: exercises.map((e) => ({
-            name: e.name,
-            sets: e.sets.map((s) => ({ weight: Number(s.weight), reps: Number(s.reps) })),
-          })),
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();

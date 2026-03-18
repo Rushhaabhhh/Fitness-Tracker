@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongoose";
 import { NutritionTarget, MealEntry, SleepEntry, GymEntry } from "@/lib/models";
 import { getTodayUTC, get14DayRange, calculateStreaks } from "@/lib/utils";
+import dayjs from "dayjs";
+import { calculateReadiness } from "@/lib/readiness";
 import { IDashboardData } from "@/types";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -32,7 +34,7 @@ export async function GET(_req: NextRequest) {
     const mealMap = Object.fromEntries(rangeMeals.map((m) => [m.date, m.meals.length > 0]));
     const sleepMap = Object.fromEntries(rangeSleep.map((s) => [s.date, s.hours > 0]));
 
-    const last14Days = range.map((date) => ({
+    const last14Days = range.map((date: string) => ({
       date,
       gymDone: gymMap[date] ?? false,
       mealsLogged: mealMap[date] ?? false,
@@ -42,27 +44,38 @@ export async function GET(_req: NextRequest) {
 
     const streakData = calculateStreaks(last14Days);
 
-    const meals = mealEntry?.meals || [];
+    const meals = mealEntry?.meals || []; // Renamed from mealEntry to entry in the instruction, but keeping mealEntry as it's defined above.
     const totals = meals.reduce(
-      (acc, meal) => ({
-        calories: acc.calories + meal.calories,
-        protein: acc.protein + meal.protein,
-        carbs: acc.carbs + meal.carbs,
-        fats: acc.fats + meal.fats,
-        fiber: acc.fiber + meal.fiber,
-        sodium: acc.sodium + meal.sodium,
-        sugar: acc.sugar + meal.sugar,
+      (acc, m) => ({
+        calories: acc.calories + m.calories,
+        protein: acc.protein + m.protein,
+        carbs: acc.carbs + m.carbs,
+        fats: acc.fats + m.fats,
+        fiber: acc.fiber + m.fiber,
+        sodium: acc.sodium + m.sodium,
+        sugar: acc.sugar + m.sugar,
       }),
       { calories: 0, protein: 0, carbs: 0, fats: 0, fiber: 0, sodium: 0, sugar: 0 }
     );
 
-    const dashboardData: IDashboardData = {
+    const yesterday = dayjs(today).subtract(1, "day").format("YYYY-MM-DD");
+    const [ySleep, yGym, yMeals] = await Promise.all([
+      SleepEntry.findOne({ userId: session.user.id, date: yesterday }),
+      GymEntry.findOne({ userId: session.user.id, date: yesterday }),
+      MealEntry.findOne({ userId: session.user.id, date: yesterday }),
+    ]);
+
+    const fullStreakData = { ...streakData, last14Days };
+    const readinessScore = calculateReadiness(ySleep, yGym, yMeals, fullStreakData);
+
+    const dashboardData: IDashboardData = { // Renamed to payload in instruction, but keeping dashboardData as it's the original type.
       today,
+      readinessScore,
       target: target ? target.toObject() : null,
       meals: meals.map((m) => ({ ...m.toObject ? m.toObject() : m })),
       sleep: sleep ? sleep.toObject() : null,
       gym: gym ? gym.toObject() : null,
-      streaks: { ...streakData, last14Days },
+      streaks: fullStreakData,
       totals,
     };
 

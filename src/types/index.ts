@@ -128,6 +128,7 @@ export interface IStreakData {
 
 export interface IDashboardData {
   today: string;
+  readinessScore?: number;
   target: INutritionTarget | null;
   meals: IMeal[];
   sleep: ISleepEntry | null;
