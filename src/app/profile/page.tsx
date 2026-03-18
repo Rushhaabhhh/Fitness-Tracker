@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import { ProfileSchema, ProfileInput } from "@/lib/validations";
 import { IUser } from "@/types";
 import { Card, Input, Select, Skeleton, SectionHeader, Badge } from "@/components/ui";
+import { GamificationWidget } from "@/components/profile/GamificationWidget";
 import { Loader2, User, Ruler, Scale, Activity, Check } from "lucide-react";
 
 const ACTIVITY_OPTIONS = [
@@ -124,6 +125,15 @@ export default function ProfilePage() {
           </div>
         </div>
       </Card>
+
+      {/* Gamification */}
+      {user && (
+        <GamificationWidget
+          xp={user.xp || 0}
+          level={user.level || 1}
+          unlockedBadges={user.badges || []}
+        />
+      )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         {/* Basic Info */}

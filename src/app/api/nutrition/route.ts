@@ -5,6 +5,8 @@ import connectDB from "@/lib/mongoose";
 import { MealEntry } from "@/lib/models";
 import { MealSchema } from "@/lib/validations";
 import { getTodayUTC } from "@/lib/utils";
+import { XP_REWARDS } from "@/lib/gamification";
+import { addXpToUser } from "@/lib/gamification-server";
 
 export async function GET(req: NextRequest) {
   try {
@@ -43,7 +45,9 @@ export async function POST(req: NextRequest) {
       { upsert: true, new: true }
     );
 
-    return NextResponse.json({ success: true, data: entry.meals });
+    const xpResult = await addXpToUser(session.user.id, XP_REWARDS.MEAL_LOGGED);
+
+    return NextResponse.json({ success: true, data: entry.meals, gamification: xpResult });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });

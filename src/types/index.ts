@@ -1,5 +1,10 @@
 import { Types } from "mongoose";
 
+export interface IBadge {
+  id: string;
+  unlockedAt: Date;
+}
+
 export interface IUser {
   _id: Types.ObjectId;
   name: string;
@@ -7,6 +12,9 @@ export interface IUser {
   password?: string;
   image?: string;
   profile: IProfile;
+  xp: number;
+  level: number;
+  badges: IBadge[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -40,7 +48,7 @@ export interface INutritionTarget {
 }
 
 export interface IMeal {
-  toObject: any;
+  toObject?: () => IMeal;
   _id?: Types.ObjectId;
   mealName: "Breakfast" | "Lunch" | "Dinner" | "Snack" | "Pre-Workout" | "Post-Workout";
   description?: string;
@@ -79,6 +87,27 @@ export interface IGymEntry {
   date: string; // YYYY-MM-DD UTC
   done: boolean;
   notes?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface IExerciseSet {
+  weight: number;
+  reps: number;
+}
+
+export interface IExercise {
+  name: string;
+  sets: IExerciseSet[];
+}
+
+export interface IWorkoutEntry {
+  _id?: Types.ObjectId;
+  userId: Types.ObjectId;
+  date: string; // YYYY-MM-DD UTC
+  name: string;
+  duration: number; // minutes
+  exercises: IExercise[];
   createdAt?: Date;
   updatedAt?: Date;
 }

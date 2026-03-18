@@ -10,6 +10,7 @@ import { StreakDisplay, useConfetti } from "@/components/streaks/StreakDisplay";
 import { AddMealForm } from "@/components/nutrition/AddMealForm";
 import { SetTargetsForm } from "@/components/nutrition/SetTargetsForm";
 import { SleepForm } from "@/components/dashboard/SleepForm";
+import WorkoutBuilder from "@/components/workout/WorkoutBuilder";
 import { MealCard } from "@/components/nutrition/MealCard";
 import { MealInput, NutritionTargetInput, SleepInput } from "@/lib/validations";
 import { getGreeting } from "@/lib/utils";
@@ -20,7 +21,7 @@ export default function DashboardPage() {
   const { triggerConfetti } = useConfetti();
   const [data, setData] = useState<IDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [modal, setModal] = useState<"meal" | "targets" | "sleep" | null>(null);
+  const [modal, setModal] = useState<"meal" | "targets" | "sleep" | "workout" | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [gymToggling, setGymToggling] = useState(false);
 
@@ -155,11 +156,12 @@ export default function DashboardPage() {
       </motion.div>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
+          { label: "Log Workout", icon: Dumbbell, color: "orange", onClick: () => setModal("workout") },
           { label: "Add Meal", icon: Plus, color: "green", onClick: () => setModal("meal") },
           { label: "Log Sleep", icon: Moon, color: "blue", onClick: () => setModal("sleep") },
-          { label: "Set Targets", icon: Target, color: "orange", onClick: () => setModal("targets") },
+          { label: "Set Targets", icon: Target, color: "purple", onClick: () => setModal("targets") },
         ].map(({ label, icon: Icon, color, onClick }, i) => (
           <motion.button
             key={label}
@@ -178,6 +180,7 @@ export default function DashboardPage() {
             <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
               color === "green" ? "bg-green-500/15 text-green-400" :
               color === "blue" ? "bg-blue-500/15 text-blue-400" :
+              color === "purple" ? "bg-purple-500/15 text-purple-400" :
               "bg-orange-500/15 text-orange-400"
             }`}>
               <Icon size={18} />
@@ -391,6 +394,11 @@ export default function DashboardPage() {
       </Modal>
       <Modal open={modal === "sleep"} onClose={() => setModal(null)} title="Log Sleep">
         <SleepForm current={data?.sleep ?? null} onSubmit={handleLogSleep} loading={actionLoading} />
+      </Modal>
+      <Modal open={modal === "workout"} onClose={() => setModal(null)} title="Workout Session" maxWidth="md">
+        <div className="-m-6">
+          <WorkoutBuilder onSuccess={() => { setModal(null); fetchDashboard(); }} />
+        </div>
       </Modal>
     </div>
   );
