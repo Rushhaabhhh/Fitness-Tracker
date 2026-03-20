@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Dumbbell, Moon, Target, RefreshCw, CheckCircle, Circle, Utensils } from "lucide-react";
 import { IDashboardData } from "@/types";
-import { Card, ProgressBar, Modal, Skeleton } from "@/components/ui";
+import { Card, ProgressBar, Modal, Skeleton, Badge } from "@/components/ui";
 import { StreakDisplay, useConfetti } from "@/components/streaks/StreakDisplay";
 import { AddMealForm } from "@/components/nutrition/AddMealForm";
 import { SetTargetsForm } from "@/components/nutrition/SetTargetsForm";
@@ -172,21 +172,22 @@ export default function DashboardPage() {
             whileHover={{ y: -2 }}
             whileTap={{ scale: 0.95 }}
             onClick={onClick}
-            className={`glass rounded-xl p-4 flex flex-col items-center gap-2 text-center transition-all border ${
-              color === "green" ? "hover:border-green-500/30 hover:bg-green-500/5" :
-              color === "blue" ? "hover:border-blue-500/30 hover:bg-blue-500/5" :
-              "hover:border-orange-500/30 hover:bg-orange-500/5"
-            } border-[rgb(var(--border-glass))]/20`}
+            className={`glass rounded-[24px] p-5 flex flex-col items-center gap-3 text-center transition-all duration-300 border ${
+              color === "green" ? "hover:border-green-500/40 hover:bg-green-500/5 hover:shadow-[0_0_24px_rgba(34,197,94,0.1)]" :
+              color === "blue" ? "hover:border-blue-500/40 hover:bg-blue-500/5 hover:shadow-[0_0_24px_rgba(59,130,246,0.1)]" :
+              color === "purple" ? "hover:border-purple-500/40 hover:bg-purple-500/5 hover:shadow-[0_0_24px_rgba(168,85,247,0.1)]" :
+              "hover:border-orange-500/40 hover:bg-orange-500/5 hover:shadow-[0_0_24px_rgba(249,115,22,0.1)]"
+            } border-[rgb(var(--border-glass))]/30 group`}
           >
-            <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
-              color === "green" ? "bg-green-500/15 text-green-400" :
-              color === "blue" ? "bg-blue-500/15 text-blue-400" :
-              color === "purple" ? "bg-purple-500/15 text-purple-400" :
-              "bg-orange-500/15 text-orange-400"
+            <div className={`w-11 h-11 rounded-full flex items-center justify-center transition-transform duration-300 group-hover:-translate-y-1 ${
+              color === "green" ? "bg-green-500/15 text-green-400 shadow-inner" :
+              color === "blue" ? "bg-blue-500/15 text-blue-400 shadow-inner" :
+              color === "purple" ? "bg-purple-500/15 text-purple-400 shadow-inner" :
+              "bg-orange-500/15 text-orange-400 shadow-inner"
             }`}>
-              <Icon size={18} />
+              <Icon size={20} />
             </div>
-            <span className="text-xs font-medium text-[rgb(var(--text-secondary))]">{label}</span>
+            <span className="text-sm font-semibold text-[rgb(var(--text-secondary))] group-hover:text-[rgb(var(--text-primary))] transition-colors">{label}</span>
           </motion.button>
         ))}
       </div>
@@ -306,28 +307,38 @@ export default function DashboardPage() {
         {/* Right column - Gym + Sleep + Streaks */}
         <div className="space-y-5">
           {/* Gym Toggle */}
-          <Card delay={0.2}>
-            <div className="flex items-center justify-between mb-3">
+          <Card delay={0.2} className="relative overflow-hidden group">
+            <div className="flex items-center justify-between mb-4 relative z-10">
               <h3 className="font-display font-semibold text-[rgb(var(--text-primary))]">Gym Today</h3>
-              <Dumbbell size={18} className="text-[rgb(var(--text-muted))]" />
+              <Dumbbell size={20} strokeWidth={2.5} className={data?.gym?.done ? "text-green-500 drop-shadow-[0_0_8px_rgba(34,197,94,0.4)]" : "text-[rgb(var(--text-muted))]"} />
             </div>
             <motion.button
               whileTap={{ scale: 0.95 }}
               onClick={handleToggleGym}
               disabled={gymToggling}
-              className={`w-full py-4 rounded-xl font-semibold text-sm transition-all duration-300 flex items-center justify-center gap-2.5 ${
+              className={`w-full py-4 rounded-[18px] font-bold text-sm transition-all duration-500 flex items-center justify-center gap-2.5 relative z-10 overflow-hidden ${
                 data?.gym?.done
-                  ? "bg-green-500/15 text-green-400 border border-green-500/30"
-                  : "border border-[rgb(var(--border-glass))]/30 text-[rgb(var(--text-muted))] hover:bg-white/5"
+                  ? "bg-green-500/15 text-green-400 border border-green-500/40"
+                  : "glass border border-[rgb(var(--border-glass))]/30 text-[rgb(var(--text-secondary))] hover:text-[rgb(var(--text-primary))] group-hover:bg-white/5"
               }`}
-              style={data?.gym?.done ? { boxShadow: "0 0 20px rgba(34,197,94,0.15)" } : {}}
             >
               {data?.gym?.done ? (
-                <><CheckCircle size={18} /> Gym Done! ✓</>
+                <>
+                  <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute inset-0 bg-green-500/5" />
+                  <CheckCircle size={18} className="relative z-10 drop-shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
+                  <span className="relative z-10 drop-shadow-[0_0_8px_rgba(34,197,94,0.5)] tracking-wide">Gym Done! ✓</span>
+                </>
               ) : (
-                <><Circle size={18} /> Mark as Done</>
+                <>
+                  <Circle size={18} className="relative z-10 opacity-70" />
+                  <span className="relative z-10 tracking-wide">Mark as Done</span>
+                </>
               )}
             </motion.button>
+            {/* Background Glow */}
+            {data?.gym?.done && (
+              <div className="absolute inset-0 bg-gradient-to-t from-green-500/15 to-transparent opacity-50 pointer-events-none" />
+            )}
           </Card>
 
           {/* Sleep */}
@@ -369,21 +380,21 @@ export default function DashboardPage() {
 
           {/* Daily completion status */}
           <Card delay={0.35}>
-            <h3 className="font-display font-semibold text-[rgb(var(--text-primary))] mb-3">Daily Checklist</h3>
-            <div className="space-y-2">
+            <h3 className="font-display font-semibold text-[rgb(var(--text-primary))] mb-4">Daily Checklist</h3>
+            <div className="space-y-3">
               {[
                 { label: "Meals logged", done: (data?.meals.length ?? 0) > 0, count: data?.meals.length },
                 { label: "Sleep logged", done: !!data?.sleep },
                 { label: "Gym done", done: !!data?.gym?.done },
               ].map(({ label, done, count }) => (
-                <div key={label} className="flex items-center gap-3 py-1.5">
-                  <div className={`w-5 h-5 rounded-full flex items-center justify-center transition-all ${done ? "bg-green-500" : "border border-[rgb(var(--border))]"}`}>
-                    {done && <CheckCircle size={12} className="text-white" />}
+                <div key={label} className={`flex items-center gap-3 p-3 rounded-2xl border transition-all duration-300 ${done ? "bg-green-500/5 border-green-500/20" : "glass border-transparent"}`}>
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-all duration-300 shadow-inner shrink-0 ${done ? "bg-gradient-to-br from-green-400 to-green-600 shadow-[0_2px_10px_rgba(34,197,94,0.3)]" : "bg-[rgb(var(--border-glass))]/50 border border-[rgb(var(--border-glass))]/30"}`}>
+                    <CheckCircle size={14} className={done ? "text-white" : "text-transparent"} strokeWidth={done ? 3 : 2} />
                   </div>
-                  <span className={`text-sm flex-1 ${done ? "text-[rgb(var(--text-primary))]" : "text-[rgb(var(--text-muted))]"}`}>
+                  <span className={`text-[15px] font-medium flex-1 transition-colors ${done ? "text-[rgb(var(--text-primary))]" : "text-[rgb(var(--text-secondary))]"}`}>
                     {label}
                   </span>
-                  {count !== undefined && <span className="text-xs text-[rgb(var(--text-muted))]">{count}</span>}
+                  {count !== undefined && count > 0 && <Badge variant={done ? "green" : "gray"}>{count}</Badge>}
                 </div>
               ))}
             </div>
