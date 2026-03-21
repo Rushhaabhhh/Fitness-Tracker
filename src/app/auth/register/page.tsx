@@ -41,8 +41,7 @@ export default function RegisterPage() {
         redirect: false,
       });
       if (result?.ok) {
-        router.push("/dashboard");
-        router.refresh();
+        window.location.href = "/dashboard";
       }
     } catch {
       setError("Something went wrong. Try again.");
