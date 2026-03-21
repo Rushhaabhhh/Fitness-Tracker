@@ -16,7 +16,7 @@ interface ExerciseData {
   sets: SetData[];
 }
 
-export default function WorkoutBuilder({ onSuccess }: { onSuccess?: () => void }) {
+export default function WorkoutBuilder({ onSuccess, date }: { onSuccess?: () => void, date?: string }) {
   const [isStarted, setIsStarted] = useState(false);
   const [startTime, setStartTime] = useState<Date | null>(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -135,6 +135,7 @@ export default function WorkoutBuilder({ onSuccess }: { onSuccess?: () => void }
 
     const payload = {
       name: workoutName,
+      date,
       duration: durationMinutes,
       exercises: exercises.map((e) => ({
         name: e.name,

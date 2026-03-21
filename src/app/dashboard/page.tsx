@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Dumbbell, Moon, Target, RefreshCw, CheckCircle, Circle, Utensils } from "lucide-react";
+import { Plus, Dumbbell, Moon, Target, RefreshCw, CheckCircle, Circle, Utensils, ChevronLeft, ChevronRight } from "lucide-react";
 import { IDashboardData } from "@/types";
 import { Card, ProgressBar, Modal, Skeleton, Badge } from "@/components/ui";
 import { StreakDisplay, useConfetti } from "@/components/streaks/StreakDisplay";
@@ -25,10 +25,25 @@ export default function DashboardPage() {
   const [modal, setModal] = useState<"meal" | "targets" | "sleep" | "workout" | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [gymToggling, setGymToggling] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(dayjs().format('YYYY-MM-DD'));
+  
+  const isToday = selectedDate === dayjs().format("YYYY-MM-DD");
+  const isOlderThan7Days = dayjs().diff(dayjs(selectedDate), "day") >= 7;
+
+  const handlePrevDay = () => {
+    if (isOlderThan7Days) return;
+    setSelectedDate((prev) => dayjs(prev).subtract(1, "day").format("YYYY-MM-DD"));
+  };
+
+  const handleNextDay = () => {
+    if (isToday) return;
+    setSelectedDate((prev) => dayjs(prev).add(1, "day").format("YYYY-MM-DD"));
+  };
 
   const fetchDashboard = useCallback(async () => {
     try {
-      const res = await fetch("/api/dashboard");
+      setLoading(true);
+      const res = await fetch(`/api/dashboard?date=${selectedDate}`);
       const json = await res.json();
       if (json.success) setData(json.data);
     } catch (e) {
@@ -36,11 +51,11 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [selectedDate]);
 
   useEffect(() => {
     fetchDashboard();
-  }, [fetchDashboard]);
+  }, [fetchDashboard, selectedDate]);
 
   // Check completion and trigger confetti
   useEffect(() => {
@@ -62,7 +77,7 @@ export default function DashboardPage() {
       await fetch("/api/nutrition", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(mealData),
+        body: JSON.stringify({ ...mealData, date: selectedDate }),
       });
       setModal(null);
       await fetchDashboard();
@@ -82,7 +97,7 @@ export default function DashboardPage() {
       await fetch("/api/targets", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(targetData),
+        body: JSON.stringify({ ...targetData, date: selectedDate }),
       });
       setModal(null);
       await fetchDashboard();
@@ -97,7 +112,7 @@ export default function DashboardPage() {
       await fetch("/api/sleep", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(sleepData),
+        body: JSON.stringify({ ...sleepData, date: selectedDate }),
       });
       setModal(null);
       await fetchDashboard();
@@ -113,7 +128,7 @@ export default function DashboardPage() {
       await fetch("/api/gym", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ done: !data.gym?.done }),
+        body: JSON.stringify({ done: !data.gym?.done, date: selectedDate }),
       });
       await fetchDashboard();
     } finally {
@@ -129,12 +144,32 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-start justify-between">
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-start justify-between mb-2">
         <div>
-          <p className="text-sm text-[rgb(var(--text-muted))] font-medium">
-            {dayjs().format("dddd, MMMM D")}
-          </p>
-          <h1 className="font-display font-bold text-2xl md:text-3xl text-[rgb(var(--text-primary))] mt-0.5">
+          <div className="flex items-center gap-1 mb-1">
+            <button
+              onClick={handlePrevDay}
+              disabled={isOlderThan7Days}
+              className="p-1 rounded-md hover:bg-white/5 disabled:opacity-30 text-[rgb(var(--text-muted))] transition-colors"
+            >
+              <ChevronLeft size={16} />
+            </button>
+            <p suppressHydrationWarning className="text-sm text-[rgb(var(--text-muted))] font-medium min-w-[120px] text-center">
+              {isToday ? (
+                <>Today, {dayjs().format("MMM D")}</>
+              ) : (
+                <>{dayjs(selectedDate).format("dddd, MMM D")}</>
+              )}
+            </p>
+            <button
+              onClick={handleNextDay}
+              disabled={isToday}
+              className="p-1 rounded-md hover:bg-white/5 disabled:opacity-30 text-[rgb(var(--text-muted))] transition-colors"
+            >
+              <ChevronRight size={16} />
+            </button>
+          </div>
+          <h1 suppressHydrationWarning className="font-display font-bold text-2xl md:text-3xl text-[rgb(var(--text-primary))] mt-0.5">
             {getGreeting()}, {session?.user?.name?.split(" ")[0] ?? "there"} 👋
           </h1>
           {isComplete && (
@@ -414,7 +449,7 @@ export default function DashboardPage() {
       </Modal>
       <Modal open={modal === "workout"} onClose={() => setModal(null)} title="Workout Session" maxWidth="md">
         <div className="-m-6">
-          <WorkoutBuilder onSuccess={() => { setModal(null); fetchDashboard(); }} />
+          <WorkoutBuilder date={selectedDate} onSuccess={() => { setModal(null); fetchDashboard(); }} />
         </div>
       </Modal>
     </div>

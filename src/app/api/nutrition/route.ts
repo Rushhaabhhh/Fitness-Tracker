@@ -36,11 +36,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: parsed.error.errors[0].message }, { status: 400 });
     }
 
-    const today = getTodayUTC();
+    const date = body.date || getTodayUTC();
     await connectDB();
 
     const entry = await MealEntry.findOneAndUpdate(
-      { userId: session.user.id, date: today },
+      { userId: session.user.id, date },
       { $push: { meals: { ...parsed.data, loggedAt: new Date() } } },
       { upsert: true, new: true }
     );

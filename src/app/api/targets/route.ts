@@ -40,12 +40,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: parsed.error.errors[0].message }, { status: 400 });
     }
 
-    const today = getTodayUTC();
+    const date = body.date || getTodayUTC();
     await connectDB();
 
     const target = await NutritionTarget.findOneAndUpdate(
-      { userId: session.user.id, date: today },
-      { $set: { ...parsed.data, userId: session.user.id, date: today } },
+      { userId: session.user.id, date },
+      { $set: { ...parsed.data, userId: session.user.id, date } },
       { upsert: true, new: true }
     );
 

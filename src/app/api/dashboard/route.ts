@@ -8,23 +8,23 @@ import dayjs from "dayjs";
 import { calculateReadiness } from "@/lib/readiness";
 import { IDashboardData } from "@/types";
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export async function GET(_req: NextRequest) {
+export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
 
-    const today = getTodayUTC();
-    const range = get14DayRange();
+    const { searchParams } = new URL(req.url);
+    const targetDate = searchParams.get("date") || getTodayUTC();
+    const range = get14DayRange(targetDate);
     const userId = session.user.id;
 
     await connectDB();
 
     const [target, mealEntry, sleep, gym, rangeGym, rangeMeals, rangeSleep] = await Promise.all([
-      NutritionTarget.findOne({ userId, date: { $lte: today } }).sort({ date: -1 }),
-      MealEntry.findOne({ userId, date: today }),
-      SleepEntry.findOne({ userId, date: today }),
-      GymEntry.findOne({ userId, date: today }),
+      NutritionTarget.findOne({ userId, date: { $lte: targetDate } }).sort({ date: -1 }),
+      MealEntry.findOne({ userId, date: targetDate }),
+      SleepEntry.findOne({ userId, date: targetDate }),
+      GymEntry.findOne({ userId, date: targetDate }),
       GymEntry.find({ userId, date: { $in: range } }),
       MealEntry.find({ userId, date: { $in: range } }),
       SleepEntry.find({ userId, date: { $in: range } }),
@@ -58,7 +58,7 @@ export async function GET(_req: NextRequest) {
       { calories: 0, protein: 0, carbs: 0, fats: 0, fiber: 0, sodium: 0, sugar: 0 }
     );
 
-    const yesterday = dayjs(today).subtract(1, "day").format("YYYY-MM-DD");
+    const yesterday = dayjs(targetDate).subtract(1, "day").format("YYYY-MM-DD");
     const [ySleep, yGym, yMeals] = await Promise.all([
       SleepEntry.findOne({ userId: session.user.id, date: yesterday }),
       GymEntry.findOne({ userId: session.user.id, date: yesterday }),
@@ -69,7 +69,7 @@ export async function GET(_req: NextRequest) {
     const readinessScore = calculateReadiness(ySleep, yGym, yMeals, fullStreakData);
 
     const dashboardData: IDashboardData = { // Renamed to payload in instruction, but keeping dashboardData as it's the original type.
-      today,
+      today: targetDate,
       readinessScore,
       target: target ? target.toObject() : null,
       meals: meals.map((m) => ({ ...m.toObject ? m.toObject() : m })),

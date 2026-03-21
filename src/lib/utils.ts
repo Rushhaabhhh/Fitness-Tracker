@@ -94,18 +94,20 @@ export function getProgressColor(pct: number): string {
   return "from-orange-500 to-red-400";
 }
 
-export function get14DayRange(): string[] {
+export function get14DayRange(endDate?: string): string[] {
   const days: string[] = [];
+  const baseDate = endDate ? dayjs.utc(endDate) : dayjs.utc();
   for (let i = 13; i >= 0; i--) {
-    days.push(dayjs.utc().subtract(i, "day").format("YYYY-MM-DD"));
+    days.push(baseDate.subtract(i, "day").format("YYYY-MM-DD"));
   }
   return days;
 }
 
-export function get30DayRange(): string[] {
+export function get30DayRange(endDate?: string): string[] {
   const days: string[] = [];
+  const baseDate = endDate ? dayjs.utc(endDate) : dayjs.utc();
   for (let i = 29; i >= 0; i--) {
-    days.push(dayjs.utc().subtract(i, "day").format("YYYY-MM-DD"));
+    days.push(baseDate.subtract(i, "day").format("YYYY-MM-DD"));
   }
   return days;
 }

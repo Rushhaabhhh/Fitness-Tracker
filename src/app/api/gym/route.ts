@@ -28,13 +28,13 @@ export async function POST(req: NextRequest) {
     if (!session?.user?.id) return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
-    const { done, notes } = body;
-    const today = getTodayUTC();
+    const { done, notes, date: reqDate } = body;
+    const date = reqDate || getTodayUTC();
 
     await connectDB();
     const entry = await GymEntry.findOneAndUpdate(
-      { userId: session.user.id, date: today },
-      { $set: { done: Boolean(done), notes, userId: session.user.id, date: today } },
+      { userId: session.user.id, date },
+      { $set: { done: Boolean(done), notes, userId: session.user.id, date } },
       { upsert: true, new: true }
     );
 
