@@ -1,20 +1,29 @@
-import { withAuth } from "next-auth/middleware";
+import { getToken } from "next-auth/jwt";
 import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-export default withAuth(
-  function middleware() {
-    return NextResponse.next();
-  },
-  {
-    callbacks: {
-      authorized: ({ token }) => !!token,
-    },
+export async function middleware(req: NextRequest) {
+  // Explicitly set secureCookie based on environment, as Vercel Edge 
+  // sometimes misinfers the protocol, failing to read '__Secure-' cookies.
+  const token = await getToken({ 
+    req, 
     secret: process.env.NEXTAUTH_SECRET,
-    pages: {
-      signIn: "/auth/login",
-    },
+    secureCookie: process.env.NODE_ENV === "production"
+  });
+
+  const isAuth = !!token;
+
+  if (!isAuth) {
+    let callbackUrl = req.nextUrl.pathname;
+    if (req.nextUrl.search) callbackUrl += req.nextUrl.search;
+    
+    return NextResponse.redirect(
+      new URL(`/auth/login?callbackUrl=${encodeURIComponent(callbackUrl)}`, req.url)
+    );
   }
-);
+
+  return NextResponse.next();
+}
 
 export const config = {
   matcher: ["/dashboard/:path*", "/nutrition/:path*", "/profile/:path*", "/history/:path*"],
