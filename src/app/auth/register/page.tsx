@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,7 +11,6 @@ import { Input } from "@/components/ui";
 import { Zap, Loader2, Mail, Lock, User } from "lucide-react";
 
 export default function RegisterPage() {
-  const router = useRouter();
   const [error, setError] = useState<string>("");
   const [loading, setLoading] = useState(false);
 
