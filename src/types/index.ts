@@ -148,7 +148,9 @@ export interface IDashboardData {
 export interface IHistoryDay {
   date: string;
   calories: number;
+  protein: number;
   target: number;
+  targetProtein: number;
   gymDone: boolean;
   sleepHours: number;
   mealsCount: number;

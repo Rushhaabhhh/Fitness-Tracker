@@ -32,39 +32,39 @@ export function updateProfileBMI(profile: IProfile): IProfile {
 }
 
 export function calculateStreaks(
-  last14Days: Array<{ date: string; gymDone: boolean; mealsLogged: boolean; sleepLogged: boolean; completed: boolean }>
+  history: Array<{ date: string; gymDone: boolean; mealsLogged: boolean; sleepLogged: boolean; completed: boolean }>
 ): { gymStreak: number; gymBestStreak: number; dailyStreak: number; dailyBestStreak: number } {
-  const sorted = [...last14Days].sort((a, b) => b.date.localeCompare(a.date));
+  // Sort from oldest to newest (chronological)
+  const sorted = [...history].sort((a, b) => a.date.localeCompare(b.date));
 
   let gymStreak = 0;
   let gymBestStreak = 0;
-  let gymTemp = 0;
+  let gymGap = 0;
+
   let dailyStreak = 0;
   let dailyBestStreak = 0;
-  let dailyTemp = 0;
-  let gymStreakBroken = false;
-  let dailyStreakBroken = false;
 
   for (const day of sorted) {
-    if (!gymStreakBroken) {
-      if (day.gymDone) { gymStreak++; gymTemp++; }
-      else { gymStreakBroken = true; if (gymTemp > gymBestStreak) gymBestStreak = gymTemp; gymTemp = 0; }
+    // Gym Streak - maintained if gap is <= 3 days
+    if (day.gymDone) {
+      gymStreak++;
+      gymGap = 0;
+      if (gymStreak > gymBestStreak) gymBestStreak = gymStreak;
     } else {
-      if (day.gymDone) { gymTemp++; if (gymTemp > gymBestStreak) gymBestStreak = gymTemp; }
-      else { if (gymTemp > gymBestStreak) gymBestStreak = gymTemp; gymTemp = 0; }
+      gymGap++;
+      if (gymGap > 3) {
+        gymStreak = 0;
+      }
     }
 
-    if (!dailyStreakBroken) {
-      if (day.completed) { dailyStreak++; dailyTemp++; }
-      else { dailyStreakBroken = true; if (dailyTemp > dailyBestStreak) dailyBestStreak = dailyTemp; dailyTemp = 0; }
+    // Daily Checklist Streak - strict consecutive
+    if (day.completed) {
+      dailyStreak++;
+      if (dailyStreak > dailyBestStreak) dailyBestStreak = dailyStreak;
     } else {
-      if (day.completed) { dailyTemp++; if (dailyTemp > dailyBestStreak) dailyBestStreak = dailyTemp; }
-      else { if (dailyTemp > dailyBestStreak) dailyBestStreak = dailyTemp; dailyTemp = 0; }
+      dailyStreak = 0;
     }
   }
-
-  if (gymTemp > gymBestStreak) gymBestStreak = gymTemp;
-  if (dailyTemp > dailyBestStreak) dailyBestStreak = dailyTemp;
 
   return { gymStreak, gymBestStreak, dailyStreak, dailyBestStreak };
 }
@@ -107,6 +107,15 @@ export function get30DayRange(endDate?: string): string[] {
   const days: string[] = [];
   const baseDate = endDate ? dayjs.utc(endDate) : dayjs.utc();
   for (let i = 29; i >= 0; i--) {
+    days.push(baseDate.subtract(i, "day").format("YYYY-MM-DD"));
+  }
+  return days;
+}
+
+export function get90DayRange(endDate?: string): string[] {
+  const days: string[] = [];
+  const baseDate = endDate ? dayjs.utc(endDate) : dayjs.utc();
+  for (let i = 89; i >= 0; i--) {
     days.push(baseDate.subtract(i, "day").format("YYYY-MM-DD"));
   }
   return days;

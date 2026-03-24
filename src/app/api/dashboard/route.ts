@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongoose";
 import { NutritionTarget, MealEntry, SleepEntry, GymEntry } from "@/lib/models";
-import { getTodayUTC, get14DayRange, calculateStreaks } from "@/lib/utils";
+import { getTodayUTC, get90DayRange, calculateStreaks } from "@/lib/utils";
 import dayjs from "dayjs";
 import { calculateReadiness } from "@/lib/readiness";
 import { IDashboardData } from "@/types";
@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const targetDate = searchParams.get("date") || getTodayUTC();
-    const range = get14DayRange(targetDate);
+    const range90 = get90DayRange(targetDate);
     const userId = session.user.id;
 
     await connectDB();
@@ -25,16 +25,16 @@ export async function GET(req: NextRequest) {
       MealEntry.findOne({ userId, date: targetDate }),
       SleepEntry.findOne({ userId, date: targetDate }),
       GymEntry.findOne({ userId, date: targetDate }),
-      GymEntry.find({ userId, date: { $in: range } }),
-      MealEntry.find({ userId, date: { $in: range } }),
-      SleepEntry.find({ userId, date: { $in: range } }),
+      GymEntry.find({ userId, date: { $in: range90 } }),
+      MealEntry.find({ userId, date: { $in: range90 } }),
+      SleepEntry.find({ userId, date: { $in: range90 } }),
     ]);
 
     const gymMap = Object.fromEntries(rangeGym.map((g) => [g.date, g.done]));
     const mealMap = Object.fromEntries(rangeMeals.map((m) => [m.date, m.meals.length > 0]));
     const sleepMap = Object.fromEntries(rangeSleep.map((s) => [s.date, s.hours > 0]));
 
-    const last14Days = range.map((date: string) => ({
+    const last90Days = range90.map((date: string) => ({
       date,
       gymDone: gymMap[date] ?? false,
       mealsLogged: mealMap[date] ?? false,
@@ -42,7 +42,9 @@ export async function GET(req: NextRequest) {
       completed: (gymMap[date] ?? false) && (mealMap[date] ?? false) && (sleepMap[date] ?? false),
     }));
 
-    const streakData = calculateStreaks(last14Days);
+    const last14Days = last90Days.slice(-14);
+
+    const streakData = calculateStreaks(last90Days);
 
     const meals = mealEntry?.meals || []; // Renamed from mealEntry to entry in the instruction, but keeping mealEntry as it's defined above.
     const totals = meals.reduce(

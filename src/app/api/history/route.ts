@@ -23,21 +23,29 @@ export async function GET(_req: NextRequest) {
       GymEntry.find({ userId, date: { $in: range } }),
     ]);
 
-    const targetMap = Object.fromEntries(targets.map((t) => [t.date, t.calories]));
+    const targetMap = Object.fromEntries(targets.map((t) => [t.date, { calories: t.calories, protein: t.protein }]));
     const mealMap = Object.fromEntries(
       meals.map((m) => [
         m.date,
-        { calories: m.meals.reduce((s: number, x: { calories: number }) => s + x.calories, 0), count: m.meals.length },
+        { 
+          calories: m.meals.reduce((s: number, x: { calories?: number }) => s + (x.calories || 0), 0), 
+          protein: m.meals.reduce((s: number, x: { protein?: number }) => s + (x.protein || 0), 0),
+          count: m.meals.length 
+        },
       ])
     );
     const sleepMap = Object.fromEntries(sleeps.map((s) => [s.date, s.hours]));
     const gymMap = Object.fromEntries(gyms.map((g) => [g.date, g.done]));
 
     // Get the last known target for each day
-    let lastTarget = 2000;
+    let lastTargetCal = 2000;
+    let lastTargetPro = 150;
     const history = range.map((date) => {
-      if (targetMap[date]) lastTarget = targetMap[date];
-      const mealData = mealMap[date] || { calories: 0, count: 0 };
+      if (targetMap[date]) {
+        lastTargetCal = targetMap[date].calories;
+        lastTargetPro = targetMap[date].protein || 150;
+      }
+      const mealData = mealMap[date] || { calories: 0, protein: 0, count: 0 };
       const gymDone = gymMap[date] ?? false;
       const sleepHours = sleepMap[date] ?? 0;
       const mealsCount = mealData.count;
@@ -45,7 +53,9 @@ export async function GET(_req: NextRequest) {
       return {
         date,
         calories: mealData.calories,
-        target: lastTarget,
+        protein: mealData.protein,
+        target: lastTargetCal,
+        targetProtein: lastTargetPro,
         gymDone,
         sleepHours,
         mealsCount,

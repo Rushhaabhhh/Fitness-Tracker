@@ -130,3 +130,18 @@ const WorkoutEntrySchema = new Schema<IWorkoutEntry>(
 WorkoutEntrySchema.index({ userId: 1, date: 1 });
 
 export const WorkoutEntry: Model<IWorkoutEntry> = mongoose.models.WorkoutEntry || mongoose.model<IWorkoutEntry>("WorkoutEntry", WorkoutEntrySchema);
+
+// SavedMeal Model
+const SavedMealSchema = new Schema({
+  userId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
+  name: { type: String, required: true },
+  calories: { type: Number, default: 0 },
+  protein: { type: Number, default: 0 },
+  carbs: { type: Number, default: 0 },
+  fats: { type: Number, default: 0 },
+  fiber: { type: Number, default: 0 },
+  sodium: { type: Number, default: 0 },
+  sugar: { type: Number, default: 0 },
+}, { timestamps: true });
+
+export const SavedMeal = mongoose.models.SavedMeal || mongoose.model("SavedMeal", SavedMealSchema);
